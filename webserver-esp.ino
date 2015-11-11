@@ -25,14 +25,14 @@
 #define EFFECTPORT        1337
 #define WEBSERVERPORT     80
 #define EEPROMSIZE        1024
-#define SERVERTEST        true
-#define ENABLEOTA         true
-#define SERIALDEBUGOUTPUT true
+#define SERVERTEST        false
+#define ENABLEOTA         false
+#define SERIALDEBUGOUTPUT false
 
 // set initial board name and wifi settings.
 String board_name = "EspLight-01";
-String sta_ssid = "www.tkkrlab.nl";
-String sta_pass = "hax4or2the2paxor3";
+String sta_ssid = "A_ssid_here";
+String sta_pass = "A_password_here";
 
 // select an initial mode.
 enum {STA_MODE, AP_MODE};
@@ -180,11 +180,12 @@ void settingsLoad()
 
   bool isValid = magicStrPresent(eeAddr);
   // check if settings are valid;
-  Serial.print("settings are valid: ");
-  Serial.println(isValid ? "true" : "false");
+  // Serial.print("settings are valid: ");
+  // Serial.println(isValid ? "true" : "false");
 
   if(isValid)
   {
+    Serial.println("valid settings found and loading.");
     // valid settings found and load them.
     board_name = loadString(eeAddr);
     sta_ssid = loadString(eeAddr);
@@ -243,7 +244,7 @@ void setupSTA(bool silent)
   {
     delay(500);
     if(!silent)
-    Serial.print(".");
+    Serial.write('.');
     // if button pressed switch mode.
     wifiModeHandling();
     // keep a timeout timer.
