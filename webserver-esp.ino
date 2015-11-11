@@ -20,14 +20,19 @@
 #include "html.h"
 #include "effectParse.h"
 
-#define AP_BUTTON         0// 12
-#define SERIALBAUD        115200
-#define EFFECTPORT        1337
-#define WEBSERVERPORT     80
-#define EEPROMSIZE        1024
-#define SERVERTEST        false
-#define ENABLEOTA         false
-#define SERIALDEBUGOUTPUT false
+#define AP_BUTTON             0// used to be button 12
+#define SERIALBAUD            115200
+#define EFFECTPORT            1337
+#define WEBSERVERPORT         80
+#define EEPROMSIZE            1024
+// set true if you want to connect to webpage,
+// even if the esplight is in station mode.
+#define SERVERTEST            false
+#define ENABLEOTA             false
+#define SERIALDEBUGOUTPUT     false
+// set to true if you want the esplight to
+// go into access point mode if it couldn't connect.
+#define AP_AFTER_FAIL         false
 
 // set initial board name and wifi settings.
 String board_name = "EspLight-01";
@@ -134,8 +139,8 @@ bool magicStrPresent(int &addr)
   }
   addr++;
   //acount for zero terminator
-  Serial.printf("\nread: %s \n", text);
-  Serial.printf("should be: %s \n", magicEepromWord.c_str());
+  //Serial.printf("\nread: %s \n", text);
+  //Serial.printf("should be: %s \n", magicEepromWord.c_str());
   return (String(text) == magicEepromWord);
 }
 
@@ -182,7 +187,7 @@ void settingsLoad()
   // check if settings are valid;
   // Serial.print("settings are valid: ");
   // Serial.println(isValid ? "true" : "false");
-
+  Serial.println("checking for valid settings.");
   if(isValid)
   {
     Serial.println("valid settings found and loading.");
@@ -199,6 +204,8 @@ void settingsLoad()
     // no valid settings found.
     // store valid settings.
     Serial.println("invalid settings found loading defaults.");
+    Serial.println("booting as access point!.");
+    currentMode = AP_MODE;
     settingsStore();
   }
 }
@@ -220,14 +227,18 @@ void printWifiStatus() {
   Serial.println(" dBm");
 }
 
-void setupAP()
+void setupAP(bool silent)
 {
   currentMode = AP_MODE;
   WiFi.mode(WIFI_AP);
   WiFi.softAP(board_name.c_str());
-  Serial.println();
-  IPAddress myIP = WiFi.softAPIP();
-  Serial.println(myIP);
+  if(!silent)
+  {
+    Serial.println();
+    IPAddress myIP = WiFi.softAPIP();
+    Serial.print("access Point IP: ");
+    Serial.println(myIP);
+  }
 }
 
 void setupSTA(bool silent)
@@ -247,17 +258,26 @@ void setupSTA(bool silent)
     Serial.write('.');
     // if button pressed switch mode.
     wifiModeHandling();
-    // keep a timeout timer.
+    // timeout after say 10 seconds.
     i++;
-    if(i == 10)
+    if(i == 20)
     {
       if(!silent)
-      Serial.println("Unable to connect");
+      {
+        Serial.println("Unable to connect");
+      }
+      if(AP_AFTER_FAIL)
+      {
+        setupAP(silent);
+      }
       return;
     }
   }
   if(!silent)
-  Serial.println();
+  {
+    Serial.println();
+  }
+  // print our current status for debugging.
   printWifiStatus();
 }
 
@@ -269,7 +289,8 @@ void wifiModeHandling()
     if(currentMode == STA_MODE)
     {
       Serial.println("mode is now AP_MODE");
-      setupAP();
+      // setup access point and print details to serial.
+      setupAP(false);
     }
     /* actually never gets here. but does if we allowed it to switch back.*/
     // else
@@ -292,7 +313,7 @@ void setupWifi(bool silent)
   else
   {
     Serial.println("mode is now AP_MODE");
-    setupAP();
+    setupAP(silent);
   }
 }
 
@@ -320,6 +341,7 @@ void setup() {
   EEPROM.begin(EEPROMSIZE);
   // settingsStore();
   // load stored settings.
+  // load defaults if no valid settings..
   settingsLoad();
 
   // setup mode switching pin
@@ -363,6 +385,7 @@ void loop() {
         setupWebserver();
         setupEffectParse(EFFECTPORT);
       }
+      delay(0);
     }
     // handle ledstrip animations.
     handleStrips();
