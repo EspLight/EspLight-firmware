@@ -21,10 +21,15 @@ to load the precompiled firmware you'll have to download and install esptool:
 
 https://github.com/themadinventor/esptool
 
-next you do:
+next you'll have to connect your esplight to a usbserial converter.
+* how to hook one up that came with the EspLight: https://www.tkkrlab.nl/wiki/EspLight#Program_the_firmware_into_the_EspLight
+
+you can find the binary in the bin folder.
+
+next you run :
 
 ```
 $ esptool.py write_flash 0x00000 webserver-esp.bin
 ```
 
-you can find the binary in the bin folder.
+after uploading you can follow the instructions for first time use.
