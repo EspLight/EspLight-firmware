@@ -245,8 +245,8 @@ void setupAP(bool silent)
   currentMode = AP_MODE;
   // setup the access point and print some debug if needed.
   WiFi.mode(WIFI_AP);
-  WiFi.softAPdisconnect();
   delay(100);
+  Serial.printf("wifi wait result: %d\n", WiFi.waitForConnectResult());
   WiFi.softAP(board_name.c_str(), "");
   WiFi.softAPConfig(
     IPAddress(wifi_ip[0], wifi_ip[1], wifi_ip[2], wifi_ip[3]),
@@ -320,6 +320,7 @@ void wifiModeHandling()
   {
     // hold while down.
     while(!digitalRead(AP_BUTTON))yield();
+    delay(50);
     // if released then set released to true
     // and handle switching to accespoint.
     released = true;
@@ -334,7 +335,7 @@ void wifiModeHandling()
 
 void setupWifi(bool silent)
 {
-  WiFi.begin(board_name.c_str());
+  WiFi.hostname("");
   if(currentMode == STA_MODE)
   {
     Serial.println("mode is now STA_MODE");
@@ -378,7 +379,7 @@ void setup() {
   settingsLoad();
 
   // setup mode switching pin
-  pinMode(AP_BUTTON, INPUT);
+  pinMode(AP_BUTTON, INPUT_PULLUP);
 
   // setup wifi with output.
   setupWifi(false);
