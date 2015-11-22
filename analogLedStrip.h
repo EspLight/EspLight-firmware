@@ -7,7 +7,7 @@
 
 #define REDPIN 5
 #define GREENPIN 4
-#define BLUEPIN 2
+#define BLUEPIN 12
 
 // setup pin related things.
 void setupAnalogStrip();
