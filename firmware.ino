@@ -13,6 +13,7 @@
 #include <WiFiUdp.h>
 #include <ESP8266mDNS.h>
 #include <EEPROM.h>
+#include <Ticker.h>
 
 #include <otaupload.h>
 
