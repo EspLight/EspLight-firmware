@@ -20,31 +20,19 @@
 #include "html.h"
 #include "effectParse.h"
 
-#define AP_BUTTON             0
-#define STATUS_LED_PIN        16
-#define SERIALBAUD            115200
-#define EFFECTPORT            1337
-#define WEBSERVERPORT         80
-#define EEPROMSIZE            1024
-// set true if you want to connect to webpage,
-// even if the esplight is in station mode.
-#define SERVERTEST            false
-// be able to upload new firmware remotely over wifi.
-#define ENABLEOTA             false
-// or you want serial debug output.
-#define SERIALDEBUGOUTPUT     false
-// set to true if you want the esplight to
-// go into access point mode if it couldn't connect.
-#define AP_AFTER_FAIL         false
+#define AP_BUTTON         0// 12
+#define SERIALBAUD        115200
+#define EFFECTPORT        1337
+#define WEBSERVERPORT     80
+#define EEPROMSIZE        1024
+#define SERVERTEST        true
+#define ENABLEOTA         true
+#define SERIALDEBUGOUTPUT true
 
 // set initial board name and wifi settings.
 String board_name = "EspLight-01";
-String sta_ssid = "A_ssid_here";
-String sta_pass = "A_password_here";
-
-const uint8_t wifi_ip[4] = {192, 168, 1, 4};
-const uint8_t wifi_subnet[4] = {255, 255, 255, 0};
-const uint8_t wifi_gateway[4] = {192, 168, 1, 1};
+String sta_ssid = "esplight_ssid";
+String sta_pass = "esplight_password";
 
 // select an initial mode.
 enum {STA_MODE, AP_MODE};
@@ -74,13 +62,6 @@ int stripselect = ANALOGSTRIP;
 // select an initial length.
 int striplen = 1;
 
-Ticker statusTicker;
-
-void statusUpdate()
-{
-  digitalWrite(STATUS_LED_PIN, !digitalRead(STATUS_LED_PIN));
-}
-
 /*
   stored are:
   board_name,
@@ -88,7 +69,7 @@ void statusUpdate()
   sta pass,
   accesPin,
   stripselect,
-  striplength
+  currentMode
   */
 
 ESP8266WebServer server(WEBSERVERPORT);
@@ -153,8 +134,8 @@ bool magicStrPresent(int &addr)
   }
   addr++;
   //acount for zero terminator
-  //Serial.printf("\nread: %s \n", text);
-  //Serial.printf("should be: %s \n", magicEepromWord.c_str());
+  Serial.printf("\nread: %s \n", text);
+  Serial.printf("should be: %s \n", magicEepromWord.c_str());
   return (String(text) == magicEepromWord);
 }
 
@@ -180,16 +161,31 @@ void settingsStore()
   sta pass,
   accesPin,
   stripselect,
-  striplength
+  currentMode
   */
   int eeAddr = 0;
+  Serial.println("storing: ");
   storeString(magicEepromWord, eeAddr);
+  Serial.println("magic word:");
+  Serial.println(magicEepromWord);
   storeString(board_name, eeAddr);
+  Serial.println("board name:");
+  Serial.println(board_name);
   storeString(sta_ssid, eeAddr);
+  Serial.println("ssid: ");
+  Serial.println(sta_ssid);
   storeString(sta_pass, eeAddr);
+  Serial.println("pass: ");
+  Serial.println(sta_pass);
   storeInt(accessPin, eeAddr);
+  Serial.println("accesspin");
+  Serial.println(accessPin);
   storeInt(stripselect, eeAddr);
+  Serial.println("strip select: ");
+  Serial.println(stripselect);
   storeInt(striplen, eeAddr);
+  Serial.println("striplen: ");
+  Serial.println(striplen);
   EEPROM.commit();
 }
 
@@ -199,12 +195,11 @@ void settingsLoad()
 
   bool isValid = magicStrPresent(eeAddr);
   // check if settings are valid;
-  // Serial.print("settings are valid: ");
-  // Serial.println(isValid ? "true" : "false");
-  Serial.println("checking for valid settings.");
+  Serial.print("settings are valid: ");
+  Serial.println(isValid ? "true" : "false");
+
   if(isValid)
   {
-    Serial.println("valid settings found and loading.");
     // valid settings found and load them.
     board_name = loadString(eeAddr);
     sta_ssid = loadString(eeAddr);
@@ -218,7 +213,6 @@ void settingsLoad()
     // no valid settings found.
     // store valid settings.
     Serial.println("invalid settings found loading defaults.");
-    Serial.println("booting as access point!.");
     settingsStore();
   }
 }
@@ -240,28 +234,14 @@ void printWifiStatus() {
   Serial.println(" dBm");
 }
 
-void setupAP(bool silent)
+void setupAP()
 {
   currentMode = AP_MODE;
-  // setup the access point and print some debug if needed.
   WiFi.mode(WIFI_AP);
-  delay(100);
-  Serial.printf("wifi wait result: %d\n", WiFi.waitForConnectResult());
-  WiFi.softAP(board_name.c_str(), "");
-  WiFi.softAPConfig(
-    IPAddress(wifi_ip[0], wifi_ip[1], wifi_ip[2], wifi_ip[3]),
-    IPAddress(wifi_gateway[0], wifi_gateway[1], wifi_gateway[2], wifi_gateway[3]),
-    IPAddress(wifi_subnet[0], wifi_subnet[1], wifi_subnet[2], wifi_subnet[3])
-  );
-  if(!silent)
-  {
-    Serial.println();
-    IPAddress myIP = WiFi.softAPIP();
-    Serial.print("access Point IP: ");
-    Serial.println(myIP);
-  }
-  // indicate we are in AP_MODE with status led.
-  statusTicker.attach(3.0, statusUpdate);
+  WiFi.softAP(board_name.c_str());
+  Serial.println();
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.println(myIP);
 }
 
 void setupSTA(bool silent)
@@ -269,7 +249,6 @@ void setupSTA(bool silent)
   currentMode = STA_MODE;
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
-  delay(100);
   WiFi.begin(sta_ssid.c_str(), sta_pass.c_str());
   if(!silent)
   Serial.println();
@@ -279,63 +258,46 @@ void setupSTA(bool silent)
   {
     delay(500);
     if(!silent)
-    Serial.write('.');
+    Serial.print(".");
     // if button pressed switch mode.
     wifiModeHandling();
-    // timeout after say 10 seconds.
+    // keep a timeout timer.
     i++;
-    if(i == 20)
+    if(i == 10)
     {
       if(!silent)
-      {
-        Serial.println("Unable to connect");
-      }
-      if(AP_AFTER_FAIL)
-      {
-        setupAP(silent);
-      }
-      break;
+      Serial.println("Unable to connect");
+      return;
     }
   }
-  // if we are connected indicate
-  // that by flashing the status led slowly
-  // also print status if not silenced
-  if(WiFi.status() == WL_CONNECTED)
-  {
-    statusTicker.attach(1.0, statusUpdate);
-    if(!silent)
-    {
-      Serial.println();
-    }
-    // print our current status for debugging.
-    printWifiStatus();
-  }
+  if(!silent)
+  Serial.println();
+  printWifiStatus();
 }
 
 void wifiModeHandling()
 {
-  static uint8_t released = false;
-  // check if button is pressed
   if(!digitalRead(AP_BUTTON))
   {
-    // hold while down.
-    while(!digitalRead(AP_BUTTON))yield();
-    delay(50);
-    // if released then set released to true
-    // and handle switching to accespoint.
-    released = true;
-  }
-  else if(released)
-  {
-    released = false;
-    Serial.println("mode is now AP_MODE (access point).");
-    setupAP(false);
+    // switch modes as needed.
+    if(currentMode == STA_MODE)
+    {
+      Serial.println("mode is now AP_MODE");
+      setupAP();
+    }
+    /* actually never gets here. but does if we allowed it to switch back.*/
+    // else
+    // {
+    //   Serial.println("mode is now STA_MODE");
+    //   // list to output that we are connecting
+    //   setupSTA(false);
+    // }
+    while(!digitalRead(AP_BUTTON)) delay(50);
   }
 }
 
 void setupWifi(bool silent)
 {
-  WiFi.hostname("");
   if(currentMode == STA_MODE)
   {
     Serial.println("mode is now STA_MODE");
@@ -344,7 +306,7 @@ void setupWifi(bool silent)
   else
   {
     Serial.println("mode is now AP_MODE");
-    setupAP(silent);
+    setupAP();
   }
 }
 
@@ -358,34 +320,30 @@ void setupWebserver()
   // start the server
   server.begin();
   Serial.println("done setting up server");
+  // request a hostname
+  WiFi.hostname(board_name);
   Serial.printf("Hostname set: %s\n", board_name.c_str());
   // scan for wifi once.
   available_aps = getAvailableNetworks();
 }
 
 void setup() {
-  // setup the status led pin, and make it toggle fast,
-  // indicating we are running the setup and still trying to connect.
-  pinMode(STATUS_LED_PIN, OUTPUT);
-  statusTicker.attach(0.05, statusUpdate);
-  // setup serial uart communication.
   Serial.begin(SERIALBAUD);
   Serial.println();
   // prepare eeprom for use.
   EEPROM.begin(EEPROMSIZE);
   // settingsStore();
   // load stored settings.
-  // load defaults if no valid settings..
   settingsLoad();
 
   // setup mode switching pin
   pinMode(AP_BUTTON, INPUT_PULLUP);
 
-  // setup wifi with output.
-  setupWifi(false);
-
   // setup strips for the first time (initialize some pointers and stuff.)
   setupStrips(striplen);
+
+  // setup wifi with output.
+  setupWifi(false);
   // enable OTA
   Serial.setDebugOutput(SERIALDEBUGOUTPUT);
   setupOta();
@@ -404,7 +362,7 @@ void loop() {
     // only serve pages in Access point mode.
     server.handleClient();
   }
-  else if(currentMode == STA_MODE)
+  if(currentMode == STA_MODE)
   {
     // check if we are still connected.
     if(WiFi.status() != WL_CONNECTED)
@@ -415,13 +373,10 @@ void loop() {
       if(WiFi.status() == WL_CONNECTED)
       {
         // if reconnected restart anything that uses a port.
-        // also indicate with a status led by blinking slowly
-        //statusTicker.attach(1.0, statusUpdate);
         setupOta();
         setupWebserver();
         setupEffectParse(EFFECTPORT);
       }
-      delay(0);
     }
     // handle ledstrip animations.
     handleStrips();
