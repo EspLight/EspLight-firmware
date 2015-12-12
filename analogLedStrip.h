@@ -17,6 +17,9 @@ void setupAnalogStrip();
     with value range 0-255.
 */
 void writeRgb(int, int, int);
+/*
+    fade the rgb ledstrip through a nice color combination.
+*/
 void fadeRgb(int, int);
 
 #endif

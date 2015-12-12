@@ -21,17 +21,18 @@
 #include "html.h"
 #include "effectParse.h"
 
-#define AP_BUTTON         0// 12
+#define AP_BUTTON         0
+#define STATUS_LED_PIN    16
 #define SERIALBAUD        115200
 #define EFFECTPORT        1337
 #define WEBSERVERPORT     80
 #define EEPROMSIZE        1024
-#define SERVERTEST        true
-#define ENABLEOTA         true
-#define SERIALDEBUGOUTPUT true
+#define SERVERTEST        false
+#define ENABLEOTA         false
+#define SERIALDEBUGOUTPUT false
 
 // set initial board name and wifi settings.
-String board_name = "EspLight-01";
+String board_name = "EspLight01";
 String sta_ssid = "esplight_ssid";
 String sta_pass = "esplight_password";
 
@@ -63,17 +64,57 @@ int stripselect = ANALOGSTRIP;
 // select an initial length.
 int striplen = 1;
 
-/*
-  stored are:
-  board_name,
-  sta ssid,
-  sta pass,
-  accesPin,
-  stripselect,
-  currentMode
-  */
-
+// setup http server
 ESP8266WebServer server(WEBSERVERPORT);
+
+// setup ticker and status blink function.
+Ticker statusBlinker;
+
+// types that define speed intervals that indicate status on led.
+typedef struct 
+{
+  int connecting;
+  int connected;
+  int apmode;
+  int error;
+} board_state_t;
+
+board_state_t board_state = 
+{
+  .connecting = 85,
+  .connected = 1000,
+  .apmode = 3000,
+  .error = -1
+};
+
+// the actuall function that sets the state of the led.
+void statusBlink()
+{
+  static uint8_t state;
+  digitalWrite(STATUS_LED_PIN, state);
+  state = !state;
+}
+
+// function to set a state.
+void setStatus(int state)
+{
+  if(state == board_state.error)
+  {
+    statusBlinker.detach();
+    digitalWrite(STATUS_LED_PIN, LOW);
+  }
+  else
+  {
+    statusBlinker.attach_ms(state, statusBlink);
+  }
+}
+
+// setup the ledstate.
+void setupStatusLed()
+{
+  pinMode(STATUS_LED_PIN, OUTPUT);
+  setStatus(board_state.connecting);
+}
 
 // stores a string into eeprom plus nullterminator.
 void storeString(String string, int& addr)
@@ -243,6 +284,7 @@ void setupAP()
   Serial.println();
   IPAddress myIP = WiFi.softAPIP();
   Serial.println(myIP);
+  setStatus(board_state.apmode);
 }
 
 void setupSTA(bool silent)
@@ -271,9 +313,12 @@ void setupSTA(bool silent)
       return;
     }
   }
+  setStatus(board_state.connected);
   if(!silent)
-  Serial.println();
-  printWifiStatus();
+  {
+    Serial.println();
+    printWifiStatus();
+  }
 }
 
 void wifiModeHandling()
@@ -329,14 +374,20 @@ void setupWebserver()
 }
 
 void setup() {
-  Serial.begin(SERIALBAUD);
-  Serial.println();
+  // setup serial com.
+  if(SERIALDEBUGOUTPUT)
+  {
+    Serial.begin(SERIALBAUD);
+    Serial.println();
+  }
   // prepare eeprom for use.
   EEPROM.begin(EEPROMSIZE);
   // settingsStore();
   // load stored settings.
   settingsLoad();
 
+  // setup led status
+  setupStatusLed();
   // setup mode switching pin
   pinMode(AP_BUTTON, INPUT_PULLUP);
 

@@ -17,6 +17,7 @@ void setupAnalogStrip()
     digitalWrite(REDPIN, 0);
     digitalWrite(GREENPIN, 0);
     digitalWrite(BLUEPIN, 0);
+    writeRgb(0, 0, 0);
     yield();
     colors = colorinc();
 }

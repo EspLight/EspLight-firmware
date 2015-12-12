@@ -3,6 +3,7 @@
 void setupStrips(int striplen)
 {
     // reset control pins.
+    // sometimes they are on a special function.
     pinMode(WS2812_PIN, INPUT);
 
     if(striplen <= 1 || striplen >= 1000)
@@ -23,6 +24,7 @@ void setupStrips(int striplen)
         // freq, amount
         setupWS2801(1e6, striplen);
     }
+    delay(100);
 }
 
 void handleStrips()
