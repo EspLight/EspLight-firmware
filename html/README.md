@@ -17,7 +17,7 @@ https://addyosmani.com/blog/removing-unused-css/
 ```json
 uncss: {
   dist: {
-    src: ['index.html'],
+    src: ['index.html', 'led.html'],
     dest: 'cleancss/tidy.css'
     options: {
       report: 'min' // optional: include to report savings
