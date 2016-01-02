@@ -392,6 +392,7 @@ void setup() {
   pinMode(AP_BUTTON, INPUT_PULLUP);
 
   // setup strips for the first time (initialize some pointers and stuff.)
+  // and also turn off the leds
   setupStrips(striplen);
 
   // setup wifi with output.

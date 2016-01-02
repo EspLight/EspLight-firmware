@@ -43,6 +43,8 @@ void setupWS2801(int freq, int len)
         buffer[1] = (uint8_t *)malloc(sizeof(uint8_t)*len);
         buffer[2] = (uint8_t *)malloc(sizeof(uint8_t)*len);
     }
+    setWS2801Strip(0, 0, 0);
+    updateWS2801();
 }
 
 /* set a certain pixel to certain (r, g, b) values.*/

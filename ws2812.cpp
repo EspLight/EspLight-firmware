@@ -28,6 +28,7 @@ void setupWS2812(uint16_t length, uint8_t pin)
         strip = new NeoPixelBus(length, pin);
     }
     strip->Begin();
+    setWS2812Strip(0, 0, 0);
     strip->Show();
 }
 
