@@ -1,11 +1,11 @@
 /*
   Author: Duality / Robert
 
-  This is Firmware for controlling ledstrips.
-  It includes a way of setting which strip is connected,
+  This is Firmware for controlling ledstrips with a esp8266.
+  It includes a way of setting which strip is connected, (webinterface)
   and how long that ledstrip is.
   It also includes a Way of finding the device through
-  broadcastig a udp packet.
+  broadcastig a udp packet. (esplightcontroller app)
   It also includes a way for controlling which effect is selected.
 */
 #include <ESP8266WiFi.h>
@@ -279,6 +279,8 @@ void printWifiStatus() {
 void setupAP()
 {
   currentMode = AP_MODE;
+  WiFi.mode(WIFI_OFF);
+  delay(0);
   WiFi.mode(WIFI_AP);
   WiFi.softAP(board_name.c_str());
   Serial.println();

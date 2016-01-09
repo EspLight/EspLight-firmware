@@ -1,43 +1,93 @@
 #include "html.h"
 #include "htmlCss.h"
 
-void urldecode2(char *dst, const char *src)
+// this code is bugged.
+// void urldecode2(char *dst, const char *src)
+// {
+//   char a, b,c;
+//   if (dst==NULL) return;
+//   while (*src) {
+//     if ((*src == '%') &&
+//       ((a = src[1]) && (b = src[2])) &&
+//       (isxdigit(a) && isxdigit(b))) {
+//       if (a >= 'a')
+//         a -= 'a'-'A';
+//       if (a >= 'A')
+//         a -= ('A' - 10);
+//       else
+//         a -= '0';
+//       if (b >= 'a')
+//         b -= 'a'-'A';
+//       if (b >= 'A')
+//         b -= ('A' - 10);
+//       else
+//         b -= '0';
+//       *dst++ = 16*a+b;
+//       src+=3;
+//     } 
+//     else {
+//         c = *src++;
+//         if(c=='+')c=' ';
+//       *dst++ = c;
+//     }
+//   }
+//   *dst++ = '\0';
+// }
+
+// String decodeB64(String text)
+// {
+//   char buff[100];
+//   urldecode2(buff, text.c_str());
+//   return String(buff);
+// }
+
+String encodeB64(String content)
 {
-  char a, b,c;
-  if (dst==NULL) return;
-  while (*src) {
-    if ((*src == '%') &&
-      ((a = src[1]) && (b = src[2])) &&
-      (isxdigit(a) && isxdigit(b))) {
-      if (a >= 'a')
-        a -= 'a'-'A';
-      if (a >= 'A')
-        a -= ('A' - 10);
-      else
-        a -= '0';
-      if (b >= 'a')
-        b -= 'a'-'A';
-      if (b >= 'A')
-        b -= ('A' - 10);
-      else
-        b -= '0';
-      *dst++ = 16*a+b;
-      src+=3;
-    } 
-    else {
-        c = *src++;
-        if(c=='+')c=' ';
-      *dst++ = c;
-    }
-  }
-  *dst++ = '\0';
+  content.replace(" ","+");
+  content.replace("!", "%21");
+  content.replace("#", "%23");
+  content.replace("$", "%24");
+  content.replace("&", "%26");
+  content.replace("'", "%27");
+  content.replace("(", "%28");
+  content.replace(")", "%29");
+  content.replace("*", "%2A");
+  content.replace("+", "%2B");
+  content.replace(",", "%2C");
+  content.replace("/", "%2F");
+  content.replace(":", "%3A");
+  content.replace(";", "%3B");
+  content.replace("=", "%3D");
+  content.replace("?", "%3F");
+  content.replace("@", "%40");
+  content.replace("[", "%5B");
+  content.replace("]", "%5D");
+  return content;
+
 }
 
-String decodeB64(String text)
+String decodeB64(String param)
 {
-  char buff[100];
-  urldecode2(buff, text.c_str());
-  return String(buff);
+  param.replace("+"," ");
+  param.replace("%21","!");
+  param.replace("%23","#");
+  param.replace("%24","$");
+  param.replace("%26","&");
+  param.replace("%27","'");
+  param.replace("%28","(");
+  param.replace("%29",")");
+  param.replace("%2A","*");
+  param.replace("%2B","+");
+  param.replace("%2C",",");
+  param.replace("%2F","/");
+  param.replace("%3A",":");
+  param.replace("%3B",";");
+  param.replace("%3D","=");
+  param.replace("%3F","?");
+  param.replace("%40","@");
+  param.replace("%5B","[");
+  param.replace("%5D","]");
+  return param;
 }
 
 String getAvailableNetworks()
@@ -112,9 +162,9 @@ String generateWifiHtml()
   "            <h2>Settings</h2>"
   "            <div class=\"center\">"
   "              <form action=\"wifisettings\" method=\"POST\">"
-  "              <label for=\"ssid\">SSID</label><br/><input type=\"text\" value=" + sta_ssid + " name=\"ssid\">"
-  "              <label for=\"ssid\">password</label><br/><input type=\"text\" value=" + sta_pass + " name=\"pwd\">"
-  "              <label for=\"ssid\">board name</label><br/><input type=\"text\" value=" + board_name + " name=\"boardname\">"
+  "              <label for=\"ssid\">SSID</label><br/><input type=\"text\" value=\"" + sta_ssid + "\" name=\"ssid\">"
+  "              <label for=\"ssid\">password</label><br/><input type=\"text\" value=\"" + sta_pass + "\" name=\"pwd\">"
+  "              <label for=\"ssid\">board name</label><br/><input type=\"text\" value=\"" + board_name + "\" name=\"boardname\">"
   "              <label for=\"ssid\">esplight code</label><br/><input type=\"text\" name=\"code\">"
   "              <input type=\"submit\" value=\"save\">"
   "              </form>"
@@ -207,7 +257,7 @@ String generateLedHtml()
   "          <div class=\"panel\">"
   "            <h2>Leds</h2>"
   "            <div class=\"center\">"
-  "              <label for=\"lednumber\">Number of leds</label><input type=\"text\" value=" + String(striplen) + " name=\"striplen\"><br/> "
+  "              <label for=\"lednumber\">Number of leds</label><input type=\"text\" value=\"" + String(striplen) + "\" name=\"striplen\"><br/> "
   "              <input type=\"submit\" value=\"save\" />"
   "            </div>"
   "          </div> "
