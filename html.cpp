@@ -3,7 +3,8 @@
 
 void urldecode2(char *dst, const char *src)
 {
-  char a, b;
+  char a, b,c;
+  if (dst==NULL) return;
   while (*src) {
     if ((*src == '%') &&
       ((a = src[1]) && (b = src[2])) &&
@@ -24,7 +25,9 @@ void urldecode2(char *dst, const char *src)
       src+=3;
     } 
     else {
-      *dst++ = *src++;
+        c = *src++;
+        if(c=='+')c=' ';
+      *dst++ = c;
     }
   }
   *dst++ = '\0';
