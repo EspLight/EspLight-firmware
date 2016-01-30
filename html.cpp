@@ -127,10 +127,18 @@ String generateWifiHtml()
   // get form data.
   if(server.args())
   {
-    sta_ssid = decodeB64(server.arg("ssid"));
-    sta_pass = decodeB64(server.arg("pwd"));
-    board_name = decodeB64(server.arg("boardname"));
-    accessPin = decodeB64(server.arg("code")).toInt();
+    sta_ssid = server.arg("ssid");
+    sta_pass = server.arg("pwd");
+    board_name = server.arg("boardname");
+    accessPin = server.arg("code").toInt();
+    Serial.printf("sta_ssid: %s\n"
+                  "sta_pass: %s\n"
+                  "board_name: %s\n"
+                  "accessPin: %d\n",
+                  sta_ssid.c_str(),
+                  sta_pass.c_str(),
+                  board_name.c_str(),
+                  accessPin);
     settingsStore();
   }
 

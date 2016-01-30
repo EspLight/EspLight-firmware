@@ -21,15 +21,18 @@
 #include "html.h"
 #include "effectParse.h"
 
-#define AP_BUTTON         0
-#define STATUS_LED_PIN    16
-#define SERIALBAUD        115200
-#define EFFECTPORT        1337
-#define WEBSERVERPORT     80
-#define EEPROMSIZE        1024
-#define SERVERTEST        false
-#define ENABLEOTA         false
-#define SERIALDEBUGOUTPUT false
+#define AP_BUTTON           0
+#define STATUS_LED_PIN      16
+#define SERIALBAUD          115200
+#define EFFECTPORT          1337
+#define WEBSERVERPORT       80
+#define EEPROMSIZE          1024
+#define SERVERTEST          false
+#define ENABLEOTA           false
+// enable all Serial printing.
+#define SERIALDEBUGPRINTING false
+// sets Serial.setDebugOutput()
+#define ENABLESERIALDEBUG   false
 
 // set initial board name and wifi settings.
 String board_name = "EspLight01";
@@ -114,6 +117,18 @@ void setupStatusLed()
 {
   pinMode(STATUS_LED_PIN, OUTPUT);
   setStatus(board_state.connecting);
+}
+
+Ticker heapPrinter;
+
+void heapPrint()
+{
+  Serial.printf("heap: %d \n", ESP.getFreeHeap());
+}
+
+void setupHeapPrint()
+{
+  heapPrinter.attach(10, heapPrint);
 }
 
 // stores a string into eeprom plus nullterminator.
@@ -377,9 +392,10 @@ void setupWebserver()
 
 void setup() {
   // setup serial com.
-  if(SERIALDEBUGOUTPUT)
+  if(SERIALDEBUGPRINTING)
   {
     Serial.begin(SERIALBAUD);
+    Serial.setDebugOutput(ENABLESERIALDEBUG);
     Serial.println();
   }
   // prepare eeprom for use.
@@ -400,7 +416,7 @@ void setup() {
   // setup wifi with output.
   setupWifi(false);
   // enable OTA
-  Serial.setDebugOutput(SERIALDEBUGOUTPUT);
+  Serial.setDebugOutput(ENABLESERIALDEBUG);
   setupOta();
 
   Serial.println("done setting up pins, and WifiMode.");
@@ -409,6 +425,9 @@ void setup() {
   setupWebserver();
   // setup the effect parser.
   setupEffectParse(EFFECTPORT);
+
+  // setup heap printing
+  setupHeapPrint();
 }
 
 void loop() {
