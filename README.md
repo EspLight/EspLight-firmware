@@ -33,3 +33,7 @@ $ esptool.py write_flash -ff 80m -fm qio -fs 32m-c1 0x00000 firmware.bin
 ```
 
 after uploading you can follow the instructions for first time use.
+
+# used libraries
+
+neopixelbus: (https://github.com/Makuna/NeoPixelBus)
