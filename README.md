@@ -1,6 +1,14 @@
 # EspLight-firmware
 firmware for on a EspLight Board.
- 
+
+# requirements:
+this library: https://github.com/Makuna/NeoPixelBus
+
+and the latest sources from: https://github.com/esp8266/arduino
+
+note, this source is compiled with SublimeText3 and the stino plugin.
+does not compile in ide because of arduino ide code mungeling.
+
 # first time use.
 the first time you use the EspLight there will probably be no firmware it 
 
@@ -33,7 +41,3 @@ $ esptool.py write_flash -ff 80m -fm qio -fs 32m-c1 0x00000 firmware.bin
 ```
 
 after uploading you can follow the instructions for first time use.
-
-# used libraries
-
-neopixelbus: (https://github.com/Makuna/NeoPixelBus)
