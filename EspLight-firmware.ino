@@ -30,9 +30,9 @@
 #define SERVERTEST          false
 #define ENABLEOTA           false
 // enable all Serial printing.
-#define SERIALDEBUGPRINTING false
+#define SERIALDEBUGPRINTING true
 // sets Serial.setDebugOutput()
-#define ENABLESERIALDEBUG   false
+#define ENABLESERIALDEBUG   true
 
 // set initial board name and wifi settings.
 String board_name = "EspLight01";
