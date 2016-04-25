@@ -25,6 +25,7 @@
 #define STATUS_LED_PIN      16
 #define SERIALBAUD          115200
 #define EFFECTPORT          1337
+#define WIFI_CHANNEL        4
 #define WEBSERVERPORT       80
 #define EEPROMSIZE          1024
 #define SERVERTEST          false
@@ -308,8 +309,8 @@ void setupSTA(bool silent)
 {
   currentMode = STA_MODE;
   WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  WiFi.begin(sta_ssid.c_str(), sta_pass.c_str());
+  // WiFi.disconnect();
+  WiFi.begin(sta_ssid.c_str(), sta_pass.c_str(), WIFI_CHANNEL);
   if(!silent)
   Serial.println();
   // timeout variable.
@@ -323,7 +324,7 @@ void setupSTA(bool silent)
     wifiModeHandling();
     // keep a timeout timer.
     i++;
-    if(i == 10)
+    if(i == 20)
     {
       if(!silent)
       Serial.println("Unable to connect");
